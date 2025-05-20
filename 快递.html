@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>快递类型智能切换工具</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .section {
+      margin-bottom: 25px;
+      padding: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      background-color: #fff;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #2c3e50;
+    }
+    .filter-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .filter-group {
+      flex: 1 0 calc(50% - 20px);
+      min-width: 300px;
+      max-width: calc(50% - 20px);
+      box-sizing: border-box;
+    }
+    .filter-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #555;
+    }
+    .filter-stats {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    .switch-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .switch-group {
+      flex: 1;
+      min-width: 200px;
+    }
+    .switch-label {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .switch-checkbox {
+      margin-right: 10px;
+    }
+    .action-button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+    .action-button:hover {
+      background-color: #2980b9;
+    }
+    #resetData {
+      background-color: #e74c3c;
+    }
+    #resetData:hover {
+      background-color: #c0392b;
+    }
+    .stats-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+    .stats-box {
+      flex: 1;
+      padding: 15px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      background-color: #fff;
+    }
+    .stats-title {
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 15px;
+      color: #2c3e50;
+      font-size: 16px;
+    }
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed #eee;
+    }
+    .stats-label {
+      font-weight: bold;
+      color: #555;
+    }
+    .stats-value {
+      text-align: right;
+      font-family: 'Courier New', monospace;
+    }
+    .stats-total {
+      font-weight: bold;
+      color: #e74c3c;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 2px solid #eee;
+    }
+    .file-input-container {
+      margin-bottom: 20px;
+    }
+    .file-input-label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: bold;
+      color: #555;
+    }
+    .file-input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: #f9f9f9;
+    }
+    .info-text {
+      font-size: 13px;
+      color: #777;
+      margin-top: 5px;
+    }
+    .current-discount-info {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f0f8ff;
+      border-radius: 4px;
+      border-left: 4px solid #3498db;
+    }
+    .switch-direction {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 15px;
+    }
+    .direction-group {
+      flex: 1;
+      min-width: 200px;
+    }
+    .discount-rules {
+      margin-top: 20px;
+      border-top: 1px solid #eee;
+      padding-top: 15px;
+    }
+    .discount-rule-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    .discount-rule-table th, .discount-rule-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    .discount-rule-table th {
+      background-color: #f2f2f2;
+    }
+    .discount-rule-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .rule-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .rule-input {
+      width: 100px;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .add-rule-btn, .remove-rule-btn, .save-rules-btn {
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .add-rule-btn {
+      background-color: #2ecc71;
+    }
+    .remove-rule-btn {
+      background-color: #e74c3c;
+    }
+    .save-rules-btn {
+      background-color: #3498db;
+    }
+    .rule-editor {
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    .type-detail {
+      font-size: 12px;
+      color: #666;
+      margin-top: 3px;
+      border-top: 1px dashed #eee;
+      padding-top: 3px;
+    }
+    .filter-count {
+      color: #3498db;
+      font-weight: bold;
+    }
+    .filter-total {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+    .select-all-btn {
+      background: none;
+      border: none;
+      color: #3498db;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 2px 5px;
+    }
+    .select-all-btn:hover {
+      text-decoration: underline;
+    }
+    .filter-search-container {
+      position: relative;
+      margin-bottom: 10px;
+    }
+    .filter-search-input {
+      width: 93%;
+      padding: 8px 30px 8px 12px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .filter-search-clear {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #6c757d;
+    }
+    .filter-search-clear:hover {
+      color: #dc3545;
+    }
+    .filter-options-container {
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    .filter-option {
+      font-size: 13px;
+      padding: 8px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      word-break: break-word;
+    }
+    .filter-option:hover {
+      background-color: #f8f9fa;
+    }
+    .filter-option.selected {
+      background-color: #e1f0fa;
+    }
+    .filter-option-checkbox {
+      margin-right: 8px;
+    }
+    .filter-option-count {
+      color: #6c757d;
+      font-size: 12px;
+    }
+    .no-options {
+      padding: 10px;
+      color: #6c757d;
+      text-align: center;
+      font-style: italic;
+    }
+    .filter-group-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    #loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 15px;
+    }
+    .loading-text {
+      font-size: 18px;
+      color: #3498db;
+      font-weight: bold;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+<!-- 在<body>开头添加 -->
+<div id="loading-overlay" style="display: none;">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">数据加载中...</div>
+</div>
+<div class="container">
+  <h1>快递类型智能切换工具</h1>
+
+  <div class="section">
+    <div class="section-title">📤 数据上传</div>
+    <div class="file-input-container">
+      <label class="file-input-label" for="fileInput">选择Excel文件:</label>
+      <input type="file" id="fileInput" class="file-input" accept=".xlsx, .xls">
+      <div class="info-text">请上传包含快递数据的Excel文件，确保包含快递单号、快递类型、原价等必要字段</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🔍 筛选条件</div>
+    <div class="filter-container">
+      <!-- 地区筛选 -->
+      <div class="filter-group">
+        <div class="filter-group-title">
+          <label class="filter-label">按地区筛选:</label>
+          <button class="select-all-btn" onclick="toggleSelectAll('region')">全选/取消全选</button>
+        </div>
+
+        <!-- 已选标签 -->
+        <div class="filter-tag-container" id="regionTags"></div>
+
+        <!-- 搜索框 -->
+        <div class="filter-search-container">
+          <input type="text" class="filter-search-input" id="regionSearch"
+                 placeholder="搜索地区..." oninput="filterOptions('region', this.value)">
+          <span class="filter-search-clear" onclick="clearSearch('region')">×</span>
+        </div>
+
+        <!-- 选项列表 -->
+        <div class="filter-options-container" id="regionOptions"></div>
+
+        <!-- 统计信息 -->
+        <div class="filter-stats" id="regionStats">
+          <span class="filter-count">0个地区</span> |
+          <span class="filter-count">0件包裹</span> |
+          <span class="filter-total">¥0.00</span>
+        </div>
+      </div>
+
+      <!-- 医院筛选 -->
+      <div class="filter-group">
+        <div class="filter-group-title">
+          <label class="filter-label">按医院筛选:</label>
+          <button class="select-all-btn" onclick="toggleSelectAll('hospital')">全选/取消全选</button>
+        </div>
+
+        <div class="filter-tag-container" id="hospitalTags"></div>
+
+        <div class="filter-search-container">
+          <input type="text" class="filter-search-input" id="hospitalSearch"
+                 placeholder="搜索医院..." oninput="filterOptions('hospital', this.value)">
+          <span class="filter-search-clear" onclick="clearSearch('hospital')">×</span>
+        </div>
+
+        <div class="filter-options-container" id="hospitalOptions"></div>
+
+        <div class="filter-stats" id="hospitalStats">
+          <span class="filter-count">0家医院</span> |
+          <span class="filter-count">0件包裹</span> |
+          <span class="filter-total">¥0.00</span>
+        </div>
+      </div>
+
+      <!-- 快递类型筛选 -->
+      <div class="filter-group">
+        <div class="filter-group-title">
+          <label class="filter-label">当前快递类型:</label>
+          <button class="select-all-btn" onclick="toggleSelectAll('expressType')">全选/取消全选</button>
+        </div>
+
+        <div class="filter-tag-container" id="expressTypeTags"></div>
+
+        <div class="filter-search-container">
+          <input type="text" class="filter-search-input" id="expressTypeSearch"
+                 placeholder="搜索快递类型..." oninput="filterOptions('expressType', this.value)">
+          <span class="filter-search-clear" onclick="clearSearch('expressType')">×</span>
+        </div>
+
+        <div class="filter-options-container" id="expressTypeOptions"></div>
+
+        <div class="filter-stats" id="expressTypeStats">
+          <span class="filter-count">0种类型</span> |
+          <span class="filter-count">0件包裹</span> |
+          <span class="filter-total">¥0.00</span>
+        </div>
+      </div>
+
+      <!-- 服务筛选 -->
+      <div class="filter-group">
+        <div class="filter-group-title">
+          <label class="filter-label" style="color: #9a9797">服务类型（仅展示）:</label>
+        </div>
+        <!-- 禁用搜索框 -->
+        <div class="filter-search-container">
+          <input
+                  type="text"
+                  class="filter-search-input"
+                  id="serviceSearch"
+                  placeholder="搜索服务..."
+                  disabled
+          >
+          <span class="filter-search-clear" style="display: none;">×</span>
+        </div>
+        <!-- 关键修改：确保容器可滚动 -->
+        <div
+                class="filter-options-container"
+                id="serviceOptions"
+                style="
+            user-select: none; /* 禁止鼠标交互 */
+            opacity: 0.7; /* 降低视觉强调 */
+            overflow-y: auto; /* 允许垂直滚动 */
+            max-height: 200px; /* 必须设置固定高度才能触发滚动 */
+        "
+        ></div>
+        <!-- 统计数据 -->
+        <div class="filter-stats" id="serviceStats">
+          <span class="filter-count">0种服务</span> |
+          <span class="filter-count">0件包裹</span> |
+          <span class="filter-total">¥0.00</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🔄 切换选项</div>
+
+    <div class="switch-direction">
+      <div class="direction-group">
+        <label class="switch-label">
+          <input type="checkbox" id="switchSend" class="switch-checkbox" checked>
+          <span>切换寄件</span>
+        </label>
+        <div class="info-text">是否切换寄件类型的快递</div>
+      </div>
+      <div class="direction-group">
+        <label class="switch-label">
+          <input type="checkbox" id="switchReceive" class="switch-checkbox" checked>
+          <span>切换收件</span>
+        </label>
+        <div class="info-text">是否切换收件类型的快递</div>
+      </div>
+    </div>
+    <br>
+
+    <div class="switch-container">
+      <div class="switch-group">
+        <label class="switch-label">
+          <input type="checkbox" id="switchUrgent" class="switch-checkbox">
+          <span>加急状态影响切换</span>
+        </label>
+        <div class="info-text">是否根据加急状态决定是否切换快递类型<span class="filter-total">(勾选，则加急件不可切换)</span></div>
+      </div>
+
+      <div class="switch-group">
+        <label class="switch-label">
+          <input type="checkbox" id="switchVip" class="switch-checkbox">
+          <span>公立、大客户影响切换</span>
+        </label>
+        <div class="info-text">是否根据大客户状态决定是否切换快递类型<span class="filter-total">(勾选，则公立、大客户件不可切换)</span></div>
+      </div>
+    </div>
+
+    <div class="switch-buttons">
+      <button id="resetData" class="action-button" style="background-color: #e74c3c;">↩️ 重置数据</button>
+      <button id="switchToSF" class="action-button">🔄 京东切顺丰</button>
+      <button id="switchToJD" class="action-button">🔄 顺丰切京东</button>
+    </div>
+  </div>
+
+  <div class="stats-container">
+    <div class="stats-box">
+      <div class="stats-title">切换前统计</div>
+      <div id="beforeStats">
+        <div class="stats-row">
+          <span class="stats-label">顺丰:</span>
+          <span class="stats-value">0 件<br>原价: ¥0.00<br>折扣价: ¥0.00</span>
+        </div>
+        <div class="stats-row">
+          <span class="stats-label">京东:</span>
+          <span class="stats-value">0 件<br>原价: ¥0.00<br>折扣价: ¥0.00</span>
+        </div>
+        <div class="stats-row stats-total">
+          <span class="stats-label">总计:</span>
+          <span class="stats-value">0 件<br>原价: ¥0.00<br>折扣价: ¥0.00</span>
+        </div>
+      </div>
+    </div>
+    <div class="stats-box">
+      <div class="stats-title">切换后统计</div>
+      <div id="afterStats">
+        <!-- 内容由JS动态生成 -->
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">💰 折扣设置与规则</div>
+
+    <div class="current-discount-info" id="currentDiscountInfo">
+      请上传文件后查看当前折扣率信息
+    </div>
+
+    <div class="discount-rules">
+      <button class="save-rules-btn" onclick="saveRules()">保存所有规则</button>
+      <h3>顺丰折扣规则 (基于金额)</h3>
+      <div class="rule-editor" id="sfRuleEditor">
+        <table class="discount-rule-table" id="sfRulesTable">
+          <thead>
+          <tr>
+            <th>最大金额(元)</th>
+            <th>折扣率(%)</th>
+            <th>操作</th>
+          </tr>
+          </thead>
+          <tbody id="sfRulesBody">
+          <!-- 动态填充 -->
+          </tbody>
+        </table>
+        <div class="rule-actions">
+          <input type="number" id="sfMaxAmount" class="rule-input" placeholder="最大金额">
+          <input type="number" id="sfDiscountRate" class="rule-input" placeholder="折扣率(%)" min="0" max="100" step="1">
+          <button class="add-rule-btn" onclick="addSfRule()">添加规则</button>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 20px;">京东折扣规则 (基于包裹数)</h3>
+      <div class="rule-editor" id="jdRuleEditor">
+        <table class="discount-rule-table" id="jdRulesTable">
+          <thead>
+          <tr>
+            <th>最大包裹数</th>
+            <th>折扣率(%)</th>
+            <th>操作</th>
+          </tr>
+          </thead>
+          <tbody id="jdRulesBody">
+          <!-- 动态填充 -->
+          </tbody>
+        </table>
+        <div class="rule-actions">
+          <input type="number" id="jdMaxCount" class="rule-input" placeholder="最大包裹数">
+          <input type="number" id="jdDiscountRate" class="rule-input" placeholder="折扣率(%)" min="0" max="100" step="1">
+          <button class="add-rule-btn" onclick="addJdRule()">添加规则</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let originalData = [];
+  let filteredData = [];
+  let beforeSwitchStats = null;
+
+  // 默认折扣规则
+  let discountRules = {
+    sf: [
+      { max: 350000, rate: 0.8 },
+      { max: 500000, rate: 0.7 },
+      { max: 750000, rate: 0.65 },
+      { max: 1150000, rate: 0.6 },
+      { max: Infinity, rate: 0.47 }
+    ],
+    jd: [
+      { max: 399, rate: 0.8 },
+      { max: 699, rate: 0.7 },
+      { max: 999, rate: 0.65 },
+      { max: 1499, rate: 0.6 },
+      { max: 1999, rate: 0.55 },
+      { max: 3999, rate: 0.5 },
+      { max: 5999, rate: 0.45 },
+      { max: Infinity, rate: 0.4 }
+    ]
+  };
+
+  // 筛选数据存储
+  const filterData = {
+    region: {
+      options: [],
+      selected: [],
+      searchText: ''
+    },
+    hospital: {
+      options: [],
+      selected: [],
+      searchText: ''
+    },
+    expressType: {
+      options: [
+        { value: '顺丰特快', label: '顺丰特快', count: 0, total: 0 },
+        { value: '顺丰标快', label: '顺丰标快', count: 0, total: 0 },
+        { value: '京东特快', label: '京东特快', count: 0, total: 0 },
+        { value: '京东标快', label: '京东标快', count: 0, total: 0 }
+      ],
+      selected: ['顺丰特快', '顺丰标快', '京东特快', '京东标快'],
+      searchText: ''
+    },
+    service: {  // 新增服务筛选
+      options: [],
+      selected: [],
+      searchText: ''
+    }
+  };
+
+  // 文件上传处理
+  let originalDataBackup = []; // 用于存储原始数据备份
+
+  // 添加价格比例配置
+  let priceRatio = {}; // 不再硬编码，改为动态计算
+
+  function calculatePriceRatios(data) {
+    // 1. 按快递类型分组，计算平均价格
+    const priceStats = {};
+    data.forEach(item => {
+      const type = item['快递类型'];
+      const price = parseFloat(item['原价']) || 0;
+
+      if (!priceStats[type]) {
+        priceStats[type] = { total: 0, count: 0 };
+      }
+      priceStats[type].total += price;
+      priceStats[type].count++;
+    });
+
+    // 2. 计算平均价格
+    const avgPrices = {};
+    Object.keys(priceStats).forEach(type => {
+      avgPrices[type] = priceStats[type].total / priceStats[type].count;
+    });
+
+    // 3. 动态计算顺丰对京东的倍率
+    priceRatio = {
+      '顺丰特快': avgPrices['顺丰特快'] / avgPrices['京东特快'],
+      '顺丰标快': avgPrices['顺丰标快'] / avgPrices['京东标快'],
+      '京东特快': 1,  // 基准值
+      '京东标快': 1   // 基准值
+    };
+
+    console.log('动态计算的价格比例:', priceRatio);
+  }
+
+
+  // 1. 数据缓存
+  let statsCache = null;
+  let lastFilterState = null;
+
+  // 初始化页面时加载规则
+  document.addEventListener('DOMContentLoaded', function() {
+    loadRules();
+  });
+
+  // 加载规则到表格
+  function loadRules() {
+    // 加载顺丰规则
+    const sfRulesBody = document.getElementById('sfRulesBody');
+    sfRulesBody.innerHTML = '';
+    discountRules.sf.forEach((rule, index) => {
+      // if (rule.max === Infinity) return; // 不显示无穷大的规则
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+                <td><input type="number" class="rule-input" value="${rule.max}" onchange="updateRule('sf', ${index}, 'max', this.value)"></td>
+                <td><input type="number" class="rule-input" value="${(rule.rate * 100).toFixed(2)}" min="0" max="100" step="1" onchange="updateRule('sf', ${index}, 'rate', this.value / 100)"></td>
+                <td><button class="remove-rule-btn" onclick="removeRule('sf', ${index})">删除</button></td>
+            `;
+      sfRulesBody.appendChild(row);
+    });
+
+    // 加载京东规则
+    const jdRulesBody = document.getElementById('jdRulesBody');
+    jdRulesBody.innerHTML = '';
+    discountRules.jd.forEach((rule, index) => {
+      // if (rule.max === Infinity) return; // 不显示无穷大的规则
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+                <td><input type="number" class="rule-input" value="${rule.max}" onchange="updateRule('jd', ${index}, 'max', this.value)"></td>
+                <td><input type="number" class="rule-input" value="${(rule.rate * 100).toFixed(2)}" min="0" max="100" step="1" onchange="updateRule('jd', ${index}, 'rate', this.value / 100)"></td>
+                <td><button class="remove-rule-btn" onclick="removeRule('jd', ${index})">删除</button></td>
+            `;
+      jdRulesBody.appendChild(row);
+    });
+  }
+
+  // 添加顺丰规则
+  function addSfRule() {
+    const maxAmount = parseFloat(document.getElementById('sfMaxAmount').value);
+    const discountRate = parseFloat(document.getElementById('sfDiscountRate').value) / 100;
+
+    if (isNaN(maxAmount)) {
+      alert('请输入有效的最大金额');
+      return;
+    }
+
+    if (isNaN(discountRate)) {
+      alert('请输入有效的折扣率');
+      return;
+    }
+
+    // 添加到规则数组
+    discountRules.sf = discountRules.sf.filter(rule => rule.max !== Infinity);
+    discountRules.sf.push({ max: maxAmount, rate: discountRate });
+    discountRules.sf.push({ max: Infinity, rate: discountRules.sf[discountRules.sf.length - 2].rate });
+
+    // 按max值排序
+    discountRules.sf.sort((a, b) => a.max - b.max);
+
+    // 重新加载规则
+    loadRules();
+
+    // 清空输入框
+    document.getElementById('sfMaxAmount').value = '';
+    document.getElementById('sfDiscountRate').value = '';
+  }
+
+  // 添加京东规则
+  function addJdRule() {
+    const maxCount = parseInt(document.getElementById('jdMaxCount').value);
+    const discountRate = parseFloat(document.getElementById('jdDiscountRate').value) / 100;
+
+    if (isNaN(maxCount)) {
+      alert('请输入有效的最大包裹数');
+      return;
+    }
+
+    if (isNaN(discountRate)) {
+      alert('请输入有效的折扣率');
+      return;
+    }
+
+    // 添加到规则数组
+    discountRules.jd = discountRules.jd.filter(rule => rule.max !== Infinity);
+    discountRules.jd.push({ max: maxCount, rate: discountRate });
+    discountRules.jd.push({ max: Infinity, rate: discountRules.jd[discountRules.jd.length - 2].rate });
+
+    // 按max值排序
+    discountRules.jd.sort((a, b) => a.max - b.max);
+
+    // 重新加载规则
+    loadRules();
+
+    // 清空输入框
+    document.getElementById('jdMaxCount').value = '';
+    document.getElementById('jdDiscountRate').value = '';
+  }
+
+  // 更新规则
+  function updateRule(type, index, field, value) {
+    if (type === 'sf') {
+      if (field === 'max') {
+        discountRules.sf[index].max = parseFloat(value);
+      } else if (field === 'rate') {
+        discountRules.sf[index].rate = parseFloat(value);
+      }
+    } else if (type === 'jd') {
+      if (field === 'max') {
+        discountRules.jd[index].max = parseInt(value);
+      } else if (field === 'rate') {
+        discountRules.jd[index].rate = parseFloat(value);
+      }
+    }
+
+    // 重新排序规则
+    if (type === 'sf') {
+      discountRules.sf.sort((a, b) => a.max - b.max);
+    } else if (type === 'jd') {
+      discountRules.jd.sort((a, b) => a.max - b.max);
+    }
+  }
+
+  // 删除规则
+  function removeRule(type, index) {
+    if (type === 'sf') {
+      discountRules.sf.splice(index, 1);
+      // 确保最后一个规则是Infinity
+      if (discountRules.sf[discountRules.sf.length - 1].max !== Infinity) {
+        const lastRate = discountRules.sf[discountRules.sf.length - 1].rate;
+        discountRules.sf.push({ max: Infinity, rate: lastRate });
+      }
+    } else if (type === 'jd') {
+      discountRules.jd.splice(index, 1);
+      // 确保最后一个规则是Infinity
+      if (discountRules.jd[discountRules.jd.length - 1].max !== Infinity) {
+        const lastRate = discountRules.jd[discountRules.jd.length - 1].rate;
+        discountRules.jd.push({ max: Infinity, rate: lastRate });
+      }
+    }
+
+    loadRules();
+  }
+
+  // 保存所有规则到本地存储
+  function saveRules() {
+    localStorage.setItem('discountRules', JSON.stringify(discountRules));
+    alert('折扣规则已保存');
+  }
+
+  // 从本地存储加载规则
+  function loadSavedRules() {
+    const savedRules = localStorage.getItem('discountRules');
+    if (savedRules) {
+      discountRules = JSON.parse(savedRules);
+      loadRules();
+    }
+  }
+
+  // 初始化筛选选项
+  function initFilters() {
+    // 初始化地区选项 - 现在包含时效对比信息
+    const regionStats = {};
+    originalData.forEach(item => {
+      const region = item['始发地/目的地'] || '';
+      const price = parseFloat(item['原价']) || 0;
+      const timeComparison = item['时效对比'] || '无数据';
+      const deliveryType=item['快递类型']
+      if (deliveryType.includes('其他费用')) return;
+
+      if (!regionStats[region]) {
+        regionStats[region] = {
+          count: 0,
+          total: 0,
+          timeComparisons: new Set() // 使用Set存储不同的时效对比值
+        };
+      }
+      regionStats[region].count++;
+      regionStats[region].total += price;
+      regionStats[region].timeComparisons.add(timeComparison);
+    });
+
+    filterData.region.options = Object.entries(regionStats)
+            .sort((a, b) => b[1].count - a[1].count)
+            .map(([value, stats]) => ({
+              value,
+              label: `${value} (时效对比:<span class="filter-total"> ${Array.from(stats.timeComparisons).join(', ')}</span>)`,
+              count: stats.count,
+              total: stats.total,
+              timeComparisons: Array.from(stats.timeComparisons)
+            }));
+
+    // 初始化医院选项
+    const hospitalStats = {};
+    originalData.forEach(item => {
+      const hospital = item['医院'] || '';
+      const price = parseFloat(item['原价']) || 0;
+      const deliveryType=item['快递类型']
+      if (deliveryType.includes('其他费用')) return;
+      if (!hospitalStats[hospital]) {
+        hospitalStats[hospital] = { count: 0, total: 0 };
+      }
+      hospitalStats[hospital].count++;
+      hospitalStats[hospital].total += price;
+    });
+
+    filterData.hospital.options = Object.entries(hospitalStats)
+            .sort((a, b) => b[1].count - a[1].count)
+            .map(([value, stats]) => ({
+              value,
+              label: value,
+              count: stats.count,
+              total: stats.total
+            }));
+
+    // 初始化快递类型统计
+    const expressTypeStats = {
+      '顺丰特快': { count: 0, total: 0 },
+      '顺丰标快': { count: 0, total: 0 },
+      '京东特快': { count: 0, total: 0 },
+      '京东标快': { count: 0, total: 0 }
+    };
+
+    originalData.forEach(item => {
+      const expressType = item['快递类型'] || '';
+      const price = parseFloat(item['原价']) || 0;
+      if (expressTypeStats[expressType]) {
+        expressTypeStats[expressType].count++;
+        expressTypeStats[expressType].total += price;
+      }
+    });
+
+    filterData.expressType.options.forEach(option => {
+      const stats = expressTypeStats[option.value] || { count: 0, total: 0 };
+      option.count = stats.count;
+      option.total = stats.total;
+    });
+    // 保持快递类型默认全选
+    filterData.expressType.selected = filterData.expressType.options.map(opt => opt.value);
+    applyFilters();
+
+    // 初始化服务选项
+    const serviceStats = {};
+    originalData.forEach(item => {
+      const service = item['服务'] || '';
+      const price = parseFloat(item['原价']) || 0;
+      if (!serviceStats[service]) {
+        serviceStats[service] = { count: 0, total: 0 };
+      }
+      serviceStats[service].count++;
+      serviceStats[service].total += price;
+    });
+
+    filterData.service.options = Object.entries(serviceStats)
+            .sort((a, b) => b[1].count - a[1].count)
+            .map(([value, stats]) => ({
+              value,
+              label: value,
+              count: stats.count,
+              total: stats.total
+            }));
+
+    // 渲染所有筛选器
+    renderAllFilters();
+    updateStats();
+  }
+
+  // 渲染所有筛选器
+  function renderAllFilters() {
+    renderFilter('region');
+    renderFilter('hospital');
+    renderFilter('expressType');
+    renderFilter('service');
+  }
+
+  // 使用文档片段和批量更新优化DOM操作
+  function renderFilter(type) {
+    const data = filterData[type];
+    const optionsContainer = document.getElementById(`${type}Options`);
+    optionsContainer.innerHTML = '';
+
+    const filteredOptions = data.options.filter(option =>
+            option.label.toLowerCase().includes(data.searchText.toLowerCase())
+    );
+
+    // 无数据时显示提示
+    if (filteredOptions.length === 0) {
+      optionsContainer.innerHTML = '<div class="no-options">无匹配结果</div>';
+      return;
+    }
+
+    // 批量生成选项
+    const optionsFragment = document.createDocumentFragment();
+    filteredOptions.forEach(option => {
+      const isSelected = data.selected.includes(option.value);
+      const optionEl = document.createElement('div');
+      optionEl.className = `filter-option ${isSelected ? 'selected' : ''}`;
+
+      // 关键修改：区分服务和普通选项
+      if (type === 'service') {
+        // 服务选项（不可选）
+        optionEl.innerHTML = `
+                <div>
+                    <input type="checkbox" class="filter-option-checkbox" disabled>
+                    ${option.label}
+                </div>
+                <span class="filter-option-count">${option.count}件, ¥${option.total.toFixed(2)}</span>
+            `;
+        optionEl.style.pointerEvents = 'auto'; // 允许滚动
+      } else {
+        // 普通选项（可选）
+        optionEl.innerHTML = `
+                <div>
+                    <input type="checkbox" class="filter-option-checkbox" ${isSelected ? 'checked' : ''}>
+                    ${option.label}
+                </div>
+                <span class="filter-option-count">${option.count}件, ¥${option.total.toFixed(2)}</span>
+            `;
+        optionEl.onclick = (e) => {
+          if (e.target.tagName !== 'INPUT') toggleOption(type, option.value);
+        };
+        optionEl.querySelector('input').onclick = (e) => {
+          e.stopPropagation();
+          toggleOption(type, option.value);
+        };
+      }
+
+      optionsFragment.appendChild(optionEl);
+    });
+
+    optionsContainer.appendChild(optionsFragment);
+  }
+
+  // 切换选项选择状态
+  function toggleOption(type, value) {
+    const data = filterData[type];
+    const index = data.selected.indexOf(value);
+
+    if (index === -1) {
+      data.selected.push(value);
+    } else {
+      data.selected.splice(index, 1);
+    }
+
+    renderFilter(type);
+    updateStats();
+    applyFilters();
+  }
+
+  // 全选/取消全选
+  function toggleSelectAll(type) {
+    const data = filterData[type];
+    const filteredOptions = data.options.filter(option =>
+            option.label.toLowerCase().includes(data.searchText.toLowerCase())
+    );
+
+    if (data.selected.length === filteredOptions.length) {
+      // 取消全选
+      data.selected = [];
+    } else {
+      // 全选当前可见选项
+      data.selected = filteredOptions.map(opt => opt.value);
+    }
+
+    renderFilter(type);
+    updateStats();
+    applyFilters();
+  }
+
+  // 筛选选项
+  function filterOptions(type, searchText) {
+    filterData[type].searchText = searchText;
+    renderFilter(type);
+  }
+
+  // 清除搜索
+  function clearSearch(type) {
+    document.getElementById(`${type}Search`).value = '';
+    filterData[type].searchText = '';
+    renderFilter(type);
+  }
+
+  // 更新统计信息
+  function updateStats() {
+    // 地区统计
+    const regionData = filterData.region;
+    const regionCount = regionData.selected.length || regionData.options.length;
+    const regionPackageCount = regionData.selected.length > 0
+            ? regionData.options
+                    .filter(opt => regionData.selected.includes(opt.value))
+                    .reduce((sum, opt) => sum + opt.count, 0)
+            : regionData.options.reduce((sum, opt) => sum + opt.count, 0);
+    const regionTotal = regionData.selected.length > 0
+            ? regionData.options
+                    .filter(opt => regionData.selected.includes(opt.value))
+                    .reduce((sum, opt) => sum + opt.total, 0)
+            : regionData.options.reduce((sum, opt) => sum + opt.total, 0);
+
+    document.getElementById('regionStats').innerHTML = `
+            <span class="filter-count">${regionCount}个地区</span> |
+            <span class="filter-count">${regionPackageCount}件包裹</span> |
+            <span class="filter-total">¥${regionTotal.toFixed(2)}</span>
+        `;
+
+    // 医院统计
+    const hospitalData = filterData.hospital;
+    const hospitalCount = hospitalData.selected.length || hospitalData.options.length;
+    const hospitalPackageCount = hospitalData.selected.length > 0
+            ? hospitalData.options
+                    .filter(opt => hospitalData.selected.includes(opt.value))
+                    .reduce((sum, opt) => sum + opt.count, 0)
+            : hospitalData.options.reduce((sum, opt) => sum + opt.count, 0);
+    const hospitalTotal = hospitalData.selected.length > 0
+            ? hospitalData.options
+                    .filter(opt => hospitalData.selected.includes(opt.value))
+                    .reduce((sum, opt) => sum + opt.total, 0)
+            : hospitalData.options.reduce((sum, opt) => sum + opt.total, 0);
+
+    document.getElementById('hospitalStats').innerHTML = `
+            <span class="filter-count">${hospitalCount}家医院</span> |
+            <span class="filter-count">${hospitalPackageCount}件包裹</span> |
+            <span class="filter-total">¥${hospitalTotal.toFixed(2)}</span>
+        `;
+
+    // 快递类型统计
+    const expressTypeData = filterData.expressType;
+    const expressTypeCount = expressTypeData.selected.length || expressTypeData.options.length;
+    const expressTypePackageCount = expressTypeData.selected.length > 0
+            ? expressTypeData.options
+                    .filter(opt => expressTypeData.selected.includes(opt.value))
+                    .reduce((sum, opt) => sum + opt.count, 0)
+            : expressTypeData.options.reduce((sum, opt) => sum + opt.count, 0);
+    const expressTypeTotal = expressTypeData.selected.length > 0
+            ? expressTypeData.options
+                    .filter(opt => expressTypeData.selected.includes(opt.value))
+                    .reduce((sum, opt) => sum + opt.total, 0)
+            : expressTypeData.options.reduce((sum, opt) => sum + opt.total, 0);
+
+    document.getElementById('expressTypeStats').innerHTML = `
+            <span class="filter-count">${expressTypeCount}种类型</span> |
+            <span class="filter-count">${expressTypePackageCount}件包裹</span> |
+            <span class="filter-total">¥${expressTypeTotal.toFixed(2)}</span>
+        `;
+
+    // 服务类型统计
+    const serviceData = filterData.service;
+    const serviceCount = serviceData.selected.length || serviceData.options.length;
+    const servicePackageCount = serviceData.selected.length > 0
+            ? serviceData.options
+                    .filter(opt => serviceData.selected.includes(opt.value))
+                    .reduce((sum, opt) => sum + opt.count, 0)
+            : serviceData.options.reduce((sum, opt) => sum + opt.count, 0);
+    const serviceTotal = serviceData.selected.length > 0
+            ? serviceData.options
+                    .filter(opt => serviceData.selected.includes(opt.value))
+                    .reduce((sum, opt) => sum + opt.total, 0)
+            : serviceData.options.reduce((sum, opt) => sum + opt.total, 0);
+
+    document.getElementById('serviceStats').innerHTML = `
+            <span class="filter-count">${serviceCount}种类型</span> |
+            <span class="filter-count">${servicePackageCount}件包裹</span> |
+            <span class="filter-total">¥${serviceTotal.toFixed(2)}</span>
+        `;
+  }
+
+  // 在文件上传时备份原始数据
+  document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    // 显示加载动画
+    const loadingOverlay = document.getElementById('loading-overlay');
+    loadingOverlay.style.display = 'flex';
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      originalData = XLSX.utils.sheet_to_json(firstSheet);
+
+      // 确保时效对比列存在，如果没有则添加空值
+      originalData.forEach(item => {
+        if (!item.hasOwnProperty('时效对比')) {
+          item['时效对比'] = '无数据';
+        }
+      });
+
+      originalDataBackup = JSON.parse(JSON.stringify(originalData));
+      // 动态计算价格比例
+      calculatePriceRatios(originalData);
+
+      // 初始化筛选选项
+      initFilters();
+
+      // 计算初始统计
+      beforeSwitchStats = calculateStats();
+      renderStats(beforeSwitchStats, 'beforeStats');
+      renderStats(calculateStats(), 'afterStats');
+
+      // 更新当前折扣信息
+      updateCurrentDiscountInfo();
+      loadingOverlay.style.display = 'none'; // 隐藏加载动画
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+
+  // 更新当前折扣信息
+  function updateCurrentDiscountInfo() {
+    const sfStats = getSfStats();
+    const jdStats = getJdStats();
+
+    const sfDiscount = getSfDiscount(sfStats.total);
+    const jdDiscount = getJdDiscount(jdStats.count);
+
+    document.getElementById('currentDiscountInfo').innerHTML = `
+            <strong>当前折扣信息:</strong><br>
+            顺丰: 总金额 ¥${sfStats.total.toFixed(2)} (${sfStats.count}件) → 适用折扣率: ${(sfDiscount * 100).toFixed(0)}%<br>
+            京东: 总包裹数 ${jdStats.count}件 (总金额 ¥${jdStats.total.toFixed(2)}) → 适用折扣率: ${(jdDiscount * 100).toFixed(0)}%
+        `;
+  }
+
+  // 获取顺丰统计数据
+  function getSfStats() {
+    const sfData = originalData.filter(item => item['快递类型']?.includes('顺丰'));
+    return {
+      count: sfData.length,
+      total: sfData.reduce((sum, item) => sum + (parseFloat(item['原价']) || 0), 0)
+    };
+  }
+
+  // 获取京东统计数据
+  function getJdStats() {
+    const jdData = originalData.filter(item => item['快递类型']?.includes('京东'));
+    return {
+      count: jdData.length,
+      total: jdData.reduce((sum, item) => sum + (parseFloat(item['原价']) || 0), 0)
+    };
+  }
+
+
+  // 修改切换按钮的事件处理函数
+  document.getElementById('switchToSF').addEventListener('click', function() {
+    performSwitch('JD_TO_SF');
+  });
+
+  document.getElementById('switchToJD').addEventListener('click', function() {
+    performSwitch('SF_TO_JD');
+  });
+
+  // 统一的切换处理函数
+  function performSwitch(switchType) {
+    const considerUrgent = document.getElementById('switchUrgent').checked;
+    const considerVip = document.getElementById('switchVip').checked;
+    const switchSend = document.getElementById('switchSend').checked;
+    const switchReceive = document.getElementById('switchReceive').checked;
+
+    let switchedCount = 0;
+
+    filteredData.forEach(item => {
+      // 检查是否需要切换该条记录
+      let shouldSwitch = true;
+
+      // 检查快递方向
+      const isSend = item['付款方式'] === '寄付';
+      if ((isSend && !switchSend) || (!isSend && !switchReceive)) {
+        shouldSwitch = false;
+      }
+
+      // 如果考虑加急状态，且当前记录是加急的，则不切换
+      if (considerUrgent && (item['是否加急'] === '是' || item['是否加急'] === true)) {
+        shouldSwitch = false;
+      }
+
+      // 如果考虑大客户状态，且当前记录是大客户的，则不切换
+      if (considerVip && (item['是否大客户'] === '是' || item['是否大客户'] === true)) {
+        shouldSwitch = false;
+      }
+
+      if (shouldSwitch) {
+        const originalPrice = parseFloat(item['原价']) || 0;
+
+        if (switchType === 'JD_TO_SF') {
+          // 京东切顺丰
+          if (item['快递类型'] === '京东特快') {
+            item['快递类型'] = '顺丰特快';
+            item['原价'] = (originalPrice * priceRatio['顺丰特快']).toFixed(2);
+            switchedCount++;
+          } else if (item['快递类型'] === '京东标快') {
+            item['快递类型'] = '顺丰标快';
+            item['原价'] = (originalPrice * priceRatio['顺丰标快']).toFixed(2);
+            switchedCount++;
+          }
+        } else if (switchType === 'SF_TO_JD') {
+          // 顺丰切京东
+          if (item['快递类型'] === '顺丰特快') {
+            item['快递类型'] = '京东特快';
+            item['原价'] = (originalPrice / priceRatio['顺丰特快']).toFixed(2);
+            switchedCount++;
+          } else if (item['快递类型'] === '顺丰标快') {
+            item['快递类型'] = '京东标快';
+            item['原价'] = (originalPrice / priceRatio['顺丰标快']).toFixed(2);
+            switchedCount++;
+          }
+        }
+      }
+    });
+
+    // 强制更新原始数据
+    updateOriginalData();
+
+    // 清除缓存，强制重新计算
+    statsCache = null;
+    lastFilterState = null;
+
+    // 重新计算并显示统计
+    const newStats = calculateStats();
+    renderStats(newStats, 'afterStats');
+    updateCurrentDiscountInfo();
+
+    alert(`已成功切换 ${switchedCount} 条记录`);
+  }
+
+  // 更新原始数据
+  function updateOriginalData() {
+    // 创建快递单号的映射以便快速查找
+    const trackingNumberMap = {};
+    originalData.forEach((item, index) => {
+      trackingNumberMap[item['快递单号']] = index;
+    });
+
+    // 更新原始数据
+    filteredData.forEach(filteredItem => {
+      const index = trackingNumberMap[filteredItem['快递单号']];
+      if (index !== undefined) {
+        originalData[index] = {...filteredItem};
+      }
+    });
+
+    // 标记数据已更改
+    dataChanged = true;
+  }
+
+  // 重置按钮事件处理
+  document.getElementById('resetData').addEventListener('click', function() {
+    if (originalDataBackup.length === 0) {
+      alert('没有可重置的原始数据');
+      return;
+    }
+
+    if (confirm('确定要重置所有数据到初始状态吗？这将撤销所有切换操作。')) {
+      // 恢复原始数据
+      originalData = JSON.parse(JSON.stringify(originalDataBackup));
+
+      // 重置筛选数据
+      filteredData = JSON.parse(JSON.stringify(originalDataBackup));
+
+      // 重置统计缓存
+      statsCache = null;
+      lastFilterState = null;
+
+      // 重新计算统计
+      beforeSwitchStats = calculateStats();
+      renderStats(beforeSwitchStats, 'beforeStats');
+      renderStats(calculateStats(), 'afterStats');
+
+      // 更新当前折扣信息
+      updateCurrentDiscountInfo();
+
+      alert('数据已重置到初始状态');
+    }
+  });
+
+
+  // 2. 优化筛选逻辑
+  function applyFilters() {
+    const currentFilterState = JSON.stringify({
+      region: filterData.region.selected,
+      hospital: filterData.hospital.selected,
+      expressType: filterData.expressType.selected
+    });
+
+    // 如果筛选条件未变化，直接使用缓存结果
+    if (lastFilterState === currentFilterState) {
+      return;
+    }
+
+    lastFilterState = currentFilterState;
+
+    const regionSelected = filterData.region.selected;
+    const hospitalSelected = filterData.hospital.selected;
+    const expressTypeSelected = filterData.expressType.selected;
+
+    // 使用更高效的筛选方法
+    filteredData = originalData.filter(item => {
+      const regionMatch = regionSelected.length === 0 ||
+              regionSelected.includes(item['始发地/目的地']);
+      const hospitalMatch = hospitalSelected.length === 0 ||
+              hospitalSelected.includes(item['医院']);
+      const expressMatch = expressTypeSelected.length === 0 ||
+              expressTypeSelected.includes(item['快递类型']);
+
+      return regionMatch && hospitalMatch && expressMatch;
+    });
+
+    // 更新缓存
+    statsCache = calculateStats();
+    renderStats(statsCache, 'afterStats');
+    updateCurrentDiscountInfo();
+  }
+
+  // 3. 优化统计计算
+  function calculateStats() {
+    const stats = {
+      '顺丰': { count: 0, originalTotal: 0, types: { '顺丰特快': 0, '顺丰标快': 0 } },
+      '京东': { count: 0, originalTotal: 0, types: { '京东特快': 0, '京东标快': 0 } },
+      '总计': { count: 0, originalTotal: 0 }
+    };
+
+    // 单次遍历计算所有统计量
+    originalData.forEach(item => {
+      const expressType = item['快递类型'] || '';
+      const price = parseFloat(item['原价']) || 0;
+
+      stats['总计'].count++;
+      stats['总计'].originalTotal += price;
+
+      if (expressType.includes('顺丰')) {
+        stats['顺丰'].count++;
+        stats['顺丰'].originalTotal += price;
+        if (expressType === '顺丰特快') stats['顺丰'].types['顺丰特快']++;
+        else if (expressType === '顺丰标快') stats['顺丰'].types['顺丰标快']++;
+      } else if (expressType.includes('京东')) {
+        stats['京东'].count++;
+        stats['京东'].originalTotal += price;
+        if (expressType === '京东特快') stats['京东'].types['京东特快']++;
+        else if (expressType === '京东标快') stats['京东'].types['京东标快']++;
+      }
+    });
+
+    // 获取折扣率 - 现在基于当前数据实时计算
+    const sfTotal = stats['顺丰'].originalTotal;
+    const jdCount = stats['京东'].count;
+
+    const sfDiscount = getSfDiscount(sfTotal);
+    const jdDiscount = getJdDiscount(jdCount);
+
+    // 计算折扣价
+    stats['顺丰'].discountedTotal = stats['顺丰'].originalTotal * sfDiscount;
+    stats['京东'].discountedTotal = stats['京东'].originalTotal * jdDiscount;
+    stats['总计'].discountedTotal = stats['顺丰'].discountedTotal + stats['京东'].discountedTotal;
+
+    return {
+      stats: stats,
+      discounts: { sf: sfDiscount, jd: jdDiscount }
+    };
+  }
+
+  // 4. 优化折扣计算
+  function getSfDiscount(total) {
+    // 直接传入总金额，避免重复计算
+    for (const rule of discountRules.sf) {
+      if (total <= rule.max) {
+        return rule.rate;
+      }
+    }
+    return 0.8;
+  }
+
+  function getJdDiscount(count) {
+    // 直接传入包裹数，避免重复计算
+    for (const rule of discountRules.jd) {
+      if (count <= rule.max) {
+        return rule.rate;
+      }
+    }
+    return 0.8;
+  }
+
+  // 5. 数据变化检测
+  function hasDataChanged() {
+    // 实现数据变化检测逻辑
+    // 可以根据需要添加更复杂的检测逻辑
+    return false; // 简化示例，实际应用中需要实现
+  }
+
+  // 6. 批量DOM更新
+  function renderStats(data, elementId) {
+    const { stats, discounts } = data;
+    const container = document.getElementById(elementId);
+
+    // 使用文档片段批量更新
+    const fragment = document.createDocumentFragment();
+
+    // 顺丰统计
+    const sfRow = document.createElement('div');
+    sfRow.className = 'stats-row';
+    sfRow.innerHTML = `
+        <span class="stats-label">顺丰 (${discounts.sf * 100}%):</span>
+        <span class="stats-value">
+            ${stats['顺丰'].count} 件<br>
+            原价: ¥${stats['顺丰'].originalTotal.toFixed(2)}<br>
+            折扣价: ¥${stats['顺丰'].discountedTotal.toFixed(2)}
+            <div class="type-detail">
+                特快: ${stats['顺丰'].types['顺丰特快']}件 |
+                标快: ${stats['顺丰'].types['顺丰标快']}件
+            </div>
+        </span>
+    `;
+    fragment.appendChild(sfRow);
+
+    // 京东统计
+    const jdRow = document.createElement('div');
+    jdRow.className = 'stats-row';
+    jdRow.innerHTML = `
+        <span class="stats-label">京东 (${discounts.jd * 100}%):</span>
+        <span class="stats-value">
+            ${stats['京东'].count} 件<br>
+            原价: ¥${stats['京东'].originalTotal.toFixed(2)}<br>
+            折扣价: ¥${stats['京东'].discountedTotal.toFixed(2)}
+            <div class="type-detail">
+                特快: ${stats['京东'].types['京东特快']}件 |
+                标快: ${stats['京东'].types['京东标快']}件
+            </div>
+        </span>
+    `;
+    fragment.appendChild(jdRow);
+
+    // 总计
+    const totalRow = document.createElement('div');
+    totalRow.className = 'stats-row stats-total';
+    totalRow.innerHTML = `
+        <span class="stats-label">总计:</span>
+        <span class="stats-value">
+            ${stats['总计'].count} 件<br>
+            原价: ¥${stats['总计'].originalTotal.toFixed(2)}<br>
+            折扣价: ¥${stats['总计'].discountedTotal.toFixed(2)}
+        </span>
+    `;
+    fragment.appendChild(totalRow);
+
+    // 一次性更新DOM
+    container.innerHTML = '';
+    container.appendChild(fragment);
+  }
+
+
+  // 页面加载时从本地存储加载规则
+  loadSavedRules();
+
+  // 为搜索输入添加防抖
+  function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  }
+
+  // 修改搜索事件监听
+  document.getElementById('regionSearch').addEventListener('input',
+          debounce(function(e) {
+            filterOptions('region', e.target.value);
+          }, 300)
+  );
+
+  // 同样应用于其他搜索框
+  document.getElementById('hospitalSearch').addEventListener('input',
+          debounce(function(e) {
+            filterOptions('hospital', e.target.value);
+          }, 300)
+  );
+
+  document.getElementById('expressTypeSearch').addEventListener('input',
+          debounce(function(e) {
+            filterOptions('expressType', e.target.value);
+          }, 300)
+  );
+</script>
+</body>
+</html>
